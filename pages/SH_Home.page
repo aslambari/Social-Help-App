@@ -1,0 +1,694 @@
+<apex:page docType="html-5.0"
+           showHeader="false" sidebar="false"
+           standardController="Contact">          
+    <apex:stylesheet value="{!URLFOR($Resource.SH_jQueryMobile, 'jquery.mobile-1.3.0.min.css')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.SH_jQueryMobile, 'jquery-1.9.1.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.SH_jQueryMobile, 'jquery.mobile-1.3.0.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.SH_jQueryMobile, 'ForceTk.js')}"/>
+   
+        <head>
+        <style>
+            .info{
+                font-weight:bold;
+                font-size:15px;
+            }
+            .tagswhite{
+                background-color:#f0f0f0;width:60px;height:20px;border-radius:5px;display:inline-block;color:black;padding:5px;
+            }
+            .tagsorange{
+                background-color:#ffeb8d;width:60px;height:20px;border-radius:5px;display:inline-block;color:black;padding:5px;
+            }
+        </style>
+        <title>Contacts</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <script type="text/javascript">
+            var $j = jQuery.noConflict(); 
+            var contactRecs = new Array();
+            var rTypeId;
+            
+            var restAPIClient = new forcetk.Client();
+            restAPIClient.setSessionToken('{!$Api.Session_ID}');
+            
+           
+            
+            $j(document).ready(function() {                
+                //$j( "#myPopupDiv" ).popup();
+                var q = "select id,name from RecordType where sObjectType='Contact' and name = 'Social Help' limit 1";
+                restAPIClient.query(q , 
+                  function(response) { 
+                           rTypeId = response.records[0].Id;                                                                            
+                  }); 
+                regBtnClickHandlers();
+               // $j.mobile.changePage('#helplogin', {changeHash: true});
+                //getAllContacts();
+            });
+            
+            function getAllContacts(){
+                $j.mobile.showPageLoadingMsg();
+                var q = "select id, firstName, lastName, phone, email, help_points__c, Picture__c from Contact Where RecordType.Name='Social Help' and id != '" + getCookie('loginconId') + "' order by FirstName";
+                restAPIClient.query(q , 
+                            function(response) { 
+                                   showContacts(response.records); 
+                                }); 
+            }
+            function showFavourit(records) {    
+                $j('#cList').empty();
+                contactRecs.length = 0;
+                
+                
+                for(var i = 0; i < records.length; i++) { contactRecs[records[i].Id] = records[i]; }
+                
+                var x = 0;
+                $j.each(records,
+                    function() {
+                        
+                    var newLi = $j('<li></li>');
+                    var newLink = $j('<a id="' +this.Id+ '" data-transition="flip">' +contactRecs[this.Id].Marked_To__r.FirstName+ ' '+contactRecs[this.Id].Marked_To__r.LastName+ '</a>');
+                    //alert(this.Id);
+                    newLink.click(function(e) {
+                       
+                        $j('#condetail').empty();                 
+                        e.preventDefault();
+                        $j.mobile.showPageLoadingMsg();
+                        var cond = $j('<li></li>');
+                        
+                        
+                        var msg = '<img src="' + contactRecs[this.id].Marked_To__r.Picture__c + '" /><h3>' +'<input type="hidden" id="help_to" value="'+ this.id +'"/>' +contactRecs[this.id].Marked_To__r.FirstName+ ' '+contactRecs[this.id].Marked_To__r.LastName+ '</h3><p>' + contactRecs[this.id].Marked_To__r.Phone + ', ' + contactRecs[this.id].Marked_To__r.Email + ' <br/> ';
+                        if(contactRecs[this.id].Marked_To__r.Help_Interest__c){
+                        var interstes = contactRecs[this.id].Marked_To__r.Help_Interest__c.split(",");
+                        for(i = 0; i < interstes.length; i++){
+                            //alert(interstes[i]);
+                            if(interstes[i] != ''){
+                                if(i%2 == 0)
+                                    msg += '<div class="tagswhite">'+interstes[i]+'</div>  ';
+                                else
+                                    msg += '<div class="tagsorange">'+interstes[i]+'</div>  ';
+                            }
+                        }
+                        }
+                        msg += '</p>';
+                        var newLinkCond = $j(msg );
+                        
+                        cond.append(newLinkCond);
+                        cond.appendTo('#condetail');
+                        
+                        $j.mobile.changePage('#peopledetail', {changeHash: true});
+                       
+                        $j('#points').text(contactRecs[this.id].Marked_To__r.Help_Points__c);
+                        $j('#help_to').val(contactRecs[this.id].Marked_To__r.Id);
+                        $j('#condetail').listview('refresh');
+                        
+                        
+                        
+                        
+                    });
+                    newLi.append(newLink);            
+                    newLi.appendTo('#cList');
+                    x++;
+                     
+                  });
+                $j.mobile.hidePageLoadingMsg();
+                $j.mobile.changePage('#listpage', {changeHash: true});
+                $j('#cList').listview('refresh');
+                
+               
+            }
+            function showContacts(records) {    
+                $j('#cList').empty();
+                contactRecs.length = 0;
+                
+                
+                for(var i = 0; i < records.length; i++) { contactRecs[records[i].Id] = records[i]; }
+                var x = 0;
+                $j.each(records,
+                    function() {
+                    var newLi = $j('<li></li>');
+                                
+                    var newLink = $j('<a id="' +this.Id+ '" data-transition="flip">' +this.FirstName+ ' '+this.LastName+ '</a>');
+                    newLink.click(function(e) {
+                        e.preventDefault();      
+                                          
+                        $j.mobile.showPageLoadingMsg();
+                        $j('#fName').val(contactRecs[this.id].FirstName);
+                        $j('#lName').val(contactRecs[this.id].LastName);
+                        $j('#phone').val(contactRecs[this.id].Phone);
+                        $j('#contactId').val(contactRecs[this.id].Id);
+                        
+                        $j('#error').html('');
+                       
+                        $j.mobile.changePage('#detailpage', {changeHash: true});
+                        $j('#points').text(contactRecs[this.id].Help_Points__c);
+                    });
+                    newLi.append(newLink);            
+                    newLi.appendTo('#cList');
+                    x++;
+                  });
+                
+                $j.mobile.hidePageLoadingMsg();
+                $j('#cList').listview('refresh');
+            } 
+            
+            function showPeople(records) {    
+                $j('#cList').empty();
+               
+                contactRecs.length = 0;
+                
+                
+                for(var i = 0; i < records.length; i++) { contactRecs[records[i].Id] = records[i]; }
+                var x = 0;
+                $j.each(records,
+                    function() {
+                   
+                    var newLi = $j('<li></li>');
+                                
+                    var newLink = $j('<a id="' +this.Id+ '" data-transition="flip">' +this.FirstName+ ' '+this.LastName+ '</a>');
+                    newLink.click(function(e) {  
+                        
+                             
+                        $j('#condetail').empty();                 
+                        e.preventDefault();
+                        $j.mobile.showPageLoadingMsg();
+                        var cond = $j('<li></li>');
+                        
+                        
+                        var msg = '<img src="' + contactRecs[this.id].Picture__c + '" /><h3>' +'<input type="hidden" id="help_to" value="'+ this.id +'"/>' +contactRecs[this.id].FirstName+ ' '+contactRecs[this.id].LastName+ '</h3><p>' + contactRecs[this.id].Phone + ', ' + contactRecs[this.id].Email + ' <br/> ';
+                        if(contactRecs[this.id].Help_Interest__c){
+                        var interstes = contactRecs[this.id].Help_Interest__c.split(",");
+                        for(i = 0; i < interstes.length; i++){
+                            //alert(interstes[i]);
+                            if(interstes[i] != ''){
+                                if(i%2 == 0)
+                                    msg += '<div class="tagswhite">'+interstes[i]+'</div>  ';
+                                else
+                                    msg += '<div class="tagsorange">'+interstes[i]+'</div>  ';
+                            }
+                        }
+                        }
+                        msg += '</p>';
+                        var newLinkCond = $j(msg );
+                        
+                        cond.append(newLinkCond);
+                        cond.appendTo('#condetail');
+                        $j('#help_to').val(contactRecs[this.id].Id);
+                        $j.mobile.changePage('#peopledetail', {changeHash: true});
+                       
+                        $j('#points').text(contactRecs[this.id].Help_Points__c);
+                        
+                        $j('#condetail').listview('refresh');
+                    });
+                    newLi.append(newLink);            
+                    newLi.appendTo('#cList');                    
+                    x++;
+                  });
+                
+                $j.mobile.hidePageLoadingMsg();                
+                $j.mobile.changePage('#listpage', {changeHash: true});
+                $j('#cList').listview('refresh');
+            }      
+        
+            function searchHelpPeople(e){
+                e.preventDefault();
+                var cId = $j('#contactId').val();
+                var helptype = $j('#helptype').val();
+                var area = $j('#area').val();
+                var q = "select id, firstName, lastName, phone, email, Help_Interest__c, Help_Points__c, Picture__c from Contact Where RecordType.Name='Social Help' AND  id != '" + getCookie('loginconId') + "' and Help_Interest__c like \'%" + helptype + "%\'";
+                if(area != ''){
+                    q += " and help_locale_area__c = \'" + area + "\'";
+                }
+                
+                restAPIClient.query(q , 
+                            function(response) { 
+                                   showPeople(response.records); 
+                                }); 
+                                
+                
+            }
+            
+            function showall(e){
+                e.preventDefault();
+                var cId = $j('#contactId').val();
+                var helptype = $j('#helptype').val();
+                var area = $j('#area').val();
+                var q = "select id, firstName, lastName, phone, email, Help_Interest__c, Help_Points__c, Picture__c from Contact Where RecordType.Name='Social Help' and id != '" + getCookie('loginconId') + "'";
+                restAPIClient.query(q , 
+                            function(response) { 
+                                   showPeople(response.records); 
+                                }); 
+                                
+                
+            }
+            function showfavourites(e,loggedInUserId){
+                e.preventDefault();
+               
+                var q = "select id,Marked_To__r.LastName,Marked_To__r.FirstName,Marked_To__r.Phone, Marked_To__r.Email, Marked_To__r.Help_Points__c, Marked_To__r.Picture__c, Marked_To__r.Help_Interest__c,Marked_To__r.Id from Favourite_Contact__c WHERE Marked_By__c='"+loggedInUserId+"'";
+                restAPIClient.query(q , 
+                            function(response) { 
+                                //alert(response);
+                                   showFavourit(response.records); 
+                                }); 
+            }
+           
+        
+            function deleteContact(e){
+                e.preventDefault();
+                restAPIClient.del('Contact', $j('#contactId').val(), sucessCallback, displayError);
+            }
+            
+            function sucessCallback(r){
+                getAllContacts();
+                $j.mobile.changePage('#listpage', {changeHash: true});
+            }
+            function sucessCallbackHelpPoint(r){
+                //alert('hello %%% '+r)
+               // $j.mobile.changePage('#listpage', {changeHash: true});
+            }
+            
+            
+        
+            function displayError(e){
+                var error = JSON.parse(e.responseText);
+                alert(error[0].message)
+                $j('#error').html(error[0].message);
+            }
+            
+            function givepoint(help_to, help_by){
+               // alert('hello');               
+                var helpPoint = { Help_By__c : help_by,
+                                Help_To__c : help_to,
+                                Points__c : 10};
+                if (help_to != 'undefined' && help_by != 'undefined'){
+                    restAPIClient.create('Help_Point__c', helpPoint, sucessCallbackHelpPoint, displayError); 
+                }
+            }
+            function markFaviroute(mark_to, mark_by){
+                var markFav = { Marked_By__c : mark_by,
+                                Marked_To__c : mark_to};
+                if ( mark_by != 'undefined' && mark_by != 'undefined'){
+                    restAPIClient.create('Favourite_Contact__c', markFav, sucessCallbackHelpPoint, displayError); 
+                }
+            }
+            
+           function setCookie(c_name,value,exdays){
+                var exdate=new Date();
+                exdate.setDate(exdate.getDate() + exdays);
+                var c_value=escape(value) + ((exdays==null) ? "" : "; expires="+exdate.toUTCString());
+                document.cookie=c_name + "=" + c_value;
+          }
+          
+          function getCookie(c_name){
+            var c_value = document.cookie;
+            var c_start = c_value.indexOf(" " + c_name + "=");
+            if (c_start == -1)
+              {
+              c_start = c_value.indexOf(c_name + "=");
+              }
+            if (c_start == -1)
+              {
+              c_value = null;
+              }
+            else
+              {
+              c_start = c_value.indexOf("=", c_start) + 1;
+              var c_end = c_value.indexOf(";", c_start);
+              if (c_end == -1)
+              {
+            c_end = c_value.length;
+            }
+            c_value = unescape(c_value.substring(c_start,c_end));
+            }
+            return c_value;
+            }
+            
+            function sucessCallbackReg(e){
+                    
+                    $j.mobile.changePage('#helplogin', {changeHash: true});  
+                    $j('#popupCloseRight').popup('open');
+                
+            }
+        
+            function regBtnClickHandlers() {
+                $j('#add').click(function(e) {
+                    e.preventDefault();
+                    $j.mobile.showPageLoadingMsg();                    
+                    $j('#fName').val('');
+                    $j('#lName').val('');
+                    $j('#phone').val('');
+                    $j('#error').html('');
+                    $j('#contactId').val('');
+                    $j('#email').val('');
+                    $j('#helpcode').val('');
+                  //  $j.mobile.changePage('#detailpage', {changeHash: true});
+                    $j.mobile.hidePageLoadingMsg();            
+                });
+                
+                 $j('#loginbtn').click(function(e) {                   
+                   var email = $j('#email').val();
+                   var hcode = $j('#helpcode').val();                 
+                  // alert('email = '+email+'\n code = '+hcode);                              
+                   if(hcode != '' && email != ''){                       
+                       var q = "select id, Email,Help_Code__c from Contact Where RecordType.Name='Social Help' AND  email ='"+email+"' AND Help_Code__c ='" + hcode +"'";
+                      
+                       restAPIClient.query(q , 
+                                    function(response) {                                                                                       
+                                           if(response.records.length > 0){
+                                              // alert(response.records[0].Id); 
+                                               var conId = response.records[0].Id;
+                                               if(conId != null){
+                                                  // $j('#loginconId').val(conId );
+                                                   setCookie('loginconId',conId,2);
+                                                   $j.mobile.changePage('#helpsearch', {changeHash: true});                                                   
+                                               }
+                                           }else{                                                   
+                                                   //$j.mobile.changePage("/apex/SH_ContactDialog?msg=Invailed Login Details", {changeHash: true});
+                                                   
+                                                   $j('#popupCloseLogin').popup('open');                                                  
+                                           }
+                                                                                     
+                                        }); 
+                   }else{                                                   
+                    
+                         $j('#popupCloseLogin').popup('open');                                                   
+                    }
+                   
+                });
+        
+                $j('#searchpeople').click(function(e) {
+                   searchHelpPeople(e);
+                });
+                $j('#showall').click(function(e) {
+                   showall(e);
+                });
+                $j('#showfavourites').click(function(e) {
+                   showfavourites(e,getCookie('loginconId'));
+                });
+                
+                $j('#back2helplogin2').click(function(e) {
+                   $j('#newfName').val('');
+                   $j('#newlName').val('');
+                   $j('#newEmail').val('');
+                   $j('#newCode').val('');
+                });
+                
+                
+        
+                $j('#delete').click(function(e) {
+                   deleteContact(e);
+                });
+                $j('#givepoint').click(function(e) {
+                   var help_to = getCookie('loginconId');                  
+                  var help_by =  $j('#help_to').val();            
+                   givepoint(help_to,help_by);
+                });
+                
+                 $j('#markFavourite').click(function(e) {
+                   var help_to = $j('#help_to').val();
+                   var help_by =   getCookie('loginconId');
+                   var q = "select id,Marked_To__r.LastName,Marked_To__r.FirstName,Marked_To__r.Phone, Marked_To__r.Email, Marked_To__r.Help_Points__c, Marked_To__r.Picture__c, Marked_To__r.Help_Interest__c,Marked_To__r.Id from Favourite_Contact__c WHERE Marked_By__c='"+help_by+"' and Marked_To__c ='" + help_to + "'";
+                    //alert(q);
+                    restAPIClient.query(q , 
+                                function(response) { 
+                                    //alert(response);
+                                       favouritResult(response.records, help_to, help_by); 
+                                    });                                 
+                   
+                });
+                
+                function favouritResult(records, help_to, help_by){
+                    
+                    if(records.length > 0){
+                    }else{
+                        
+                        markFaviroute(help_to,help_by);
+                    }
+                }
+                
+                $j('#registerbtn').click(function(e) {
+                   $j.mobile.changePage('#registration', {changeHash: true}); 
+                });
+                
+                $j('#regSavebtn').click(function(e) {
+                   var fname = $j('#newfName').val();
+                   var lname = $j('#newlName').val();
+                   var email = $j('#newEmail').val();
+                  
+                   var area = $j("#newArea").val();
+                   var helpIntersts = '';
+                   $j(':checkbox:checked').each(
+                       function(i){  
+                       helpIntersts +=$j(this).attr('name')+',';   
+                     });
+                   //if(helpIntersts == ''){
+                       helpIntersts += $j('#newOther').val();
+                   //}
+                   var error = 'Error : \n';
+                   var templen = error.length;
+                   if(fname == ''){
+                       error += 'Please enter First Name\n';
+                   }
+                   if(lname == ''){
+                       error += 'Please enter Last Name\n';
+                   }
+                   if(email == ''){
+                       error += 'Please enter email\n';
+                   }
+                   
+                   var errorlen = error.length
+                   if(errorlen > templen){
+                       $j("#popupCloseForm h1").text(error);
+                       $j("#popupCloseForm").popup("open");
+                       //alert(error);
+                   }else{                         
+                       if(rTypeId != 'undefined'){
+                           var con = { FirstName : fname,
+                                LastName : lname,
+                                Email : email,
+                                Phone : '8888888888',
+                                Help_Interest__c : helpIntersts ,
+                                Picture__c : 'http://labs.aslambari.com/jqm_images/user.gif',
+                                RecordTypeId : rTypeId,
+                                Help_Locale_Area__c : area};                        
+                                restAPIClient.create('Contact', con, sucessCallbackReg, displayError);
+                                 
+                          
+                      } 
+                   }
+                  
+                });               
+                
+                   
+            }
+        </script>    
+    </head>
+
+    <body>
+         <div data-role="page" data-theme="b" id="helplogin">
+             <div data-role="header" data-position="fixed" data-theme="b">
+                <h1>Help Login</h1>
+            </div>
+            <center>
+            <div data-role="content" data-theme="b">
+                <div data-role="popup" id="popupCloseRight" class="ui-content" style="max-width:280px">
+                    <a href="#" data-rel="back" data-role="button" data-theme="a" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
+                    <p><h1 style="color:green">Successfully Register. Please login here.</h1></p>
+                </div>
+                <div data-role="popup" id="popupCloseLogin" class="ui-content" style="max-width:280px">
+                    <a href="#" data-rel="back" data-role="button" data-theme="a" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
+                    <p><h1 style="color:red">Invalid Login Credentials. Try again.</h1></p>
+                </div>
+                
+                <img src="{!URLFOR($Resource.SH_jQueryMobile, 'images/social_help.png')}" />
+            </div>
+            </center>
+            <div data-role="content" data-theme="b">
+                <div data-role="fieldcontain">
+                    <label for="email">Email:</label>
+                </div>
+                <div data-role="fieldcontain">
+                    <input name="email" id="email" />
+                </div>
+                
+                <div data-role="fieldcontain">
+                    <label for="helpcode">Help Code:</label>
+                    
+                </div>
+                <div data-role="fieldcontain">
+                    <input name="helpcode" id="helpcode" />
+                </div>
+                <h2 style="color:red" id="loginerror"></h2><br/>                
+                <button id="loginbtn" data-role="button" data-icon="check" data-inline="true" data-theme="b" class="save">Login</button>
+                <button id="registerbtn" data-role="button" data-icon="check" data-inline="true" data-theme="b" class="save">Register</button>                
+            </div>
+            <div data-role="footer" class="ui-bar" data-theme="b"> 
+                <a href="/apex/SH_ContactDialog?type=info" data-role="button" data-rel="dialog"><img src="{!URLFOR($Resource.SH_jQueryMobile, 'images/info.png')}" /></a>
+            </div> 
+         </div>       
+        
+        <div data-role="page" data-theme="b" id="helpsearch">
+            <div data-role="header" data-position="fixed" data-theme="b">
+                <h1>Help Needed</h1>                
+            </div>
+            <div data-role="content" data-theme="b">
+                <div data-role="fieldcontain">
+                    <label for="fName">Help Type (Keywords)</label>
+                </div>
+                <div data-role="fieldcontain">
+                    <input name="helptype" id="helptype" />
+                </div>
+                
+                <div data-role="fieldcontain">
+                    <label for="lName">Locale Area:</label>
+                    
+                </div>
+                <div data-role="fieldcontain">
+                    <input name="area" id="area" />
+                </div>
+                <h2 style="color:red" id="error"></h2><br/>
+                <input type="hidden" id="contactId" />
+                <button id="searchpeople" data-role="button" data-icon="check" data-inline="true" data-theme="b" class="save">Search People</button>
+                <button id="showall" data-role="button" data-icon="check" data-inline="true" data-theme="b" class="save">Show All</button>
+                <button id="showfavourites" data-role="button" data-icon="check" data-inline="true" data-theme="b" class="save">Show Favourites</button>
+            </div> 
+            <div data-role="footer" class="ui-bar" data-theme="b"> 
+                <a href="/apex/SH_ContactDialog?type=info" data-role="button" data-rel="dialog"><img src="{!URLFOR($Resource.SH_jQueryMobile, 'images/info.png')}" /></a>
+                
+            </div>   
+        </div>
+        <div data-role="page" data-theme="b" id="listpage">
+            <div data-role="header" data-position="fixed" data-theme="b">
+                <a href='#helpsearch' id="back2helpsearch" class='ui-btn-left' data-icon='arrow-l' data-direction="reverse" data-transition="flip">Back</a>
+                <h1>Search Results</h1>
+            </div>
+             <div data-role="content" id="contactList" data-theme="b">            
+                <ul id="cList" data-filter="true" data-inset="true" data-role="listview" 
+                    data-theme="c" data-dividertheme="b">
+                </ul>
+            </div>   
+        </div>  
+        <div data-role="page" data-theme="b" id="peopledetail">
+            <div data-role="header" data-position="fixed" data-theme="b">
+                <a href='#listpage' id="back2ContactList" class='ui-btn-left' data-icon='arrow-l' data-direction="reverse" data-transition="flip">Back</a>
+                <h1>Person Detail</h1>
+            </div>
+            <div data-role="content" data-theme="b">
+                <ul data-role="listview" id="condetail">
+                </ul> <br/> <br/>
+                
+                
+                <a href="#popupMenu" data-rel="popup" data-role="button" data-inline="true" data-transition="slideup" data-icon="gear" data-theme="e">Options...</a>
+
+                <div data-role="popup" id="popupMenu" data-theme="d">
+                        <ul data-role="listview" data-inset="true" style="min-width:210px;" data-theme="d">
+                            <li data-role="divider" data-theme="e">Choose an action</li>
+                            <li><a href="/apex/SH_ContactDialog?type=sms" data-rel="dialog"><img src="http://www.expresstext.net/sms-marketing/images/icon_chat.png" class="ui-li-icon"/> SMS</a></li>
+                         <li> <a  href="/apex/SH_ContactDialog?type=call" data-rel="dialog"><img src="http://img.softpile.com/mobile/icon/6f/2012042623405029.png" class="ui-li-icon" /> Call</a></li>
+                         <li> <a href="/apex/SH_ContactDialog?type=email" data-rel="dialog"><img src="http://www.thefallschurch-episcopal.org/storage/icon-mail.png" class="ui-li-icon"/> Email</a></li>
+                        </ul>
+                </div>
+                
+                           
+                <a href="/apex/SH_ContactDialog?type=point" id="givepoint" data-role="button" data-inline="true" data-rel="dialog" data-transition="pop">Give Points</a> 
+                <a href="/apex/SH_ContactDialog?type=favourite" id="markFavourite" data-role="button" data-inline="true" data-rel="dialog" data-transition="pop">Mark Favourite</a> 
+                <div style="display:inline-block;">
+                <div id="points" style="display:inline-block;padding-top:10px;width:45px;height:46px;background-position:center;background-repeat:no-repeat;text-align:center;font-weight:bold;font-size:25px;background-image:url({!URLFOR($Resource.SH_jQueryMobile, 'images/points.gif')})">
+                    0
+                </div>
+                <b>Points</b>
+                
+                </div> 
+                
+            </div>    
+            <div data-role="footer" class="ui-bar" data-theme="b"> 
+                <a href="/apex/SH_ContactDialog?type=info" data-role="button" data-rel="dialog"><img src="{!URLFOR($Resource.SH_jQueryMobile, 'images/info.png')}" /></a>
+            </div>
+        </div>
+        
+        <!-- registration Page -->
+         <div data-role="page" data-theme="c" id="registration">
+             <div data-role="header" data-position="fixed" data-theme="b">
+                 <a href='#helplogin' id="back2helplogin2" class='ui-btn-left' data-icon='arrow-l' data-direction="reverse" data-transition="flip">Back</a>
+                <h1>Help Registration</h1>
+            </div>
+            <div data-role="content" data-theme="c">
+                <div data-role="popup" id="popupCloseForm" class="ui-content" style="max-width:280px">
+                    <a href="#" data-rel="back" data-role="button" data-theme="a" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
+                    <p><h1 style="color:red"></h1></p>
+                </div>
+                <div data-role="fieldcontain">                
+                    <label for="newfName">First Name:</label>
+                    
+                 
+                </div> 
+                <div data-role="fieldcontain">
+                    <input name="newfName" id="newfName" />
+                </div>                            
+                <div data-role="fieldcontain">
+                    <label style="width:10%;margin:0px;" for="newlName">Last Name:</label>  
+                                   
+                </div> 
+                <div data-role="fieldcontain">
+                    <input name="newlName" id="newlName" />   
+                </div>                
+                <div data-role="fieldcontain">
+                    <label style="width:10%;margin:0px;" for="newEmail">Email:</label>
+                    
+                </div>    
+                 <div data-role="fieldcontain">
+                    <input  name="newEmail" id="newEmail" />  
+                </div>               
+                <!--<div data-role="fieldcontain">                
+                    <label style="width:10%;margin:0px;" for="newCode">Help Code:</label>
+                                  
+                </div> 
+                <div data-role="fieldcontain">
+                   <input name="newCode" id="newCode" />   
+                </div> -->
+                <div data-role="fieldcontain">
+                    <label style="width:10%;margin:0px;" for="newEmail">Help Interests:</label>
+                    
+                </div> 
+                <div data-role="fieldcontain">
+                    <fieldset data-role="controlgroup" data-type="horizontal" > 
+                        <input type="checkbox" name="Sports" id="Sports" class="custom" />
+                        <input type="checkbox" name="Book" id="Book" class="custom" />
+                        <input type="checkbox" name="Shopping" id="Shopping" class="custom" />
+                        <input type="checkbox" name="Rent" id="Rent" class="custom" />
+                        <input type="checkbox" name="Vehicle" id="Vehicle" class="custom" />
+                        <input type="checkbox" name="Money" id="Money" class="custom" />
+                        <input type="checkbox" name="Medical" id="Medical" class="custom" />
+                        
+                        <label for="Sports">Sports</label>
+                        <label for="Book">Book</label>
+                        <label for="Shopping">Shopping</label>
+                        <label for="Rent">Rent</label>
+                        <label for="Vehicle">Vehicle</label>
+                        <label for="Money">Money</label>
+                        <label for="Medical">Medical</label>
+                    </fieldset>
+            </div>
+             <div data-role="fieldcontain">
+                    <label style="width:20%;margin:0px;" for="newOther">Others (If not found in list above):</label>
+              </div> 
+              <div data-role="fieldcontain">
+                    <input  name="newOther" id="newOther" />  
+               </div> 
+              <div data-role="fieldcontain">
+                    <label style="width:20%;margin:0px;" for="newArea">Help Local Area:</label>
+              </div> 
+              <div data-role="fieldcontain">
+                    <input  name="newArea" id="newArea" />  
+               </div> 
+                           
+                <h2 style="color:red" id="loginerror"></h2><br/>                
+                <button id="regSavebtn" data-role="button" data-icon="check" data-inline="true" data-theme="b" class="save">Save</button>                
+            </div>
+            <div data-role="footer" class="ui-bar" data-theme="b"> 
+                <a href="/apex/SH_ContactDialog?type=info" data-role="button" data-rel="dialog"><img src="{!URLFOR($Resource.SH_jQueryMobile, 'images/info.png')}" /></a>
+                <a style="display:none;" href="/apex/SH_ContactDialog?type=success" id="successDialog" data-role="button" data-rel="dialog"></a>
+            </div>
+         
+         </div> 
+           <div data-role="popup" id="popupBasic">
+            
+            </div>
+    </body>    
+</apex:page>

@@ -1,0 +1,54 @@
+<apex:page docType="html-5.0"
+           showHeader="false" sidebar="false"
+           standardController="Contact">          
+    <apex:stylesheet value="{!URLFOR($Resource.SH_jQueryMobile, 'jquery.mobile-1.3.0.min.css')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.SH_jQueryMobile, 'jquery-1.9.1.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.SH_jQueryMobile, 'jquery.mobile-1.3.0.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.SH_jQueryMobile, 'ForceTk.js')}"/>
+    <head>
+        <title>Contacts</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    </head>
+
+    <body>    
+        <div data-role="page" data-theme="b" id="listpage">                
+           <div data-role="header" data-theme="b">
+            <h1>Contact Help Action</h1>
+        </div>
+
+        <div data-role="content" data-theme="d">
+            <h1>Information</h1>
+            <!--Point section --->
+            <div style="display:{!IF($CurrentPage.parameters.type=='point','block;','none;')}">
+                <p>10 points is given to this person.<img src="http://smileys.on-my-web.com/repository/Happy/happy-king-095.gif" /></p>
+            </div>
+            
+            <!--Favourite Section--->
+            <div style="display:{!IF($CurrentPage.parameters.type=='favourite','block;','none;')}">
+                <p>Person is marked for favourite.<img src="http://cdn1.iconfinder.com/data/icons/lin/24/2.png" /></p>
+            </div>
+            
+            <!--Action Section--->
+            
+            <div style="display:{!IF($CurrentPage.parameters.type=='call','block;','none;')}">
+                <p>Call Functionality currently not implemented. Will be coming soon. <img src="http://cdn1.iconfinder.com/data/icons/UII_Icons/24x24/smiley_add.png" /></p>
+            </div>
+             <div style="display:{!IF($CurrentPage.parameters.type=='email','block;','none;')}">
+                <p>Email Functionality currently not implemented. Will be coming soon. <img src="http://cdn1.iconfinder.com/data/icons/UII_Icons/24x24/smiley_add.png" /></p>
+            </div>
+             <div style="display:{!IF($CurrentPage.parameters.type=='sms','block;','none;')}">
+                <p>SMS Functionality currently not implemented. Will be coming soon. <img src="http://cdn1.iconfinder.com/data/icons/UII_Icons/24x24/smiley_add.png" /></p>
+            </div>
+            <div style="display:{!IF($CurrentPage.parameters.type=='info','block;','none;')};background-image:url({!URLFOR($Resource.SH_jQueryMobile, 'images/social_help.png')});height:136px;background-position:right;background-repeat:no-repeat">
+                <p><h1 style="font-size:20px;">Social Help</h1> <br/> <br/>
+                <h1>Powered By</h1><br/> &nbsp; &nbsp; &nbsp; &nbsp; Force.com with jQuery Mobile toolkit<br/>
+                <h1>Created By</h1><br/> &nbsp; &nbsp; &nbsp; &nbsp; <a href="http://www.aslambari.com" target="_BLANK">http://www.aslambari.com</a>
+                </p>
+            </div>
+            <a href="docs-dialogs.html" data-role="button" data-rel="back" data-theme="a" data-inline="true">Back</a>       
+        </div>
+        </div>
+        
+        
+    </body>    
+</apex:page>
